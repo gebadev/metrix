@@ -12,6 +12,48 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **コンテナ化**: Docker
 - **デプロイ先**: Google Cloud Run
 
+## ブランチ戦略（GitHub Flow）
+
+このプロジェクトは**GitHub Flow**を採用しています。
+
+### 基本方針
+
+- **mainブランチ**: 常にデプロイ可能な状態を保つ。リリース用ブランチ。
+- **feature/issue-<番号>ブランチ**: 各issueに対応する作業用ブランチ。
+
+### ワークフロー
+
+```bash
+# 1. 新しい作業を開始
+git checkout main
+git pull origin main
+git checkout -b feature/issue-<番号>
+
+# 2. 作業を進める
+git add .
+git commit -m "作業内容の説明
+
+Closes #<番号>"
+
+# 3. プッシュしてPR作成
+git push origin feature/issue-<番号>
+# GitHubでPull Requestを作成（ベース: main）
+
+# 4. マージ後のクリーンアップ
+git checkout main
+git pull origin main
+git branch -d feature/issue-<番号>
+```
+
+### リリース時のタグ作成
+
+```bash
+git checkout main
+git pull origin main
+git tag -a v1.0.0 -m "Release version 1.0.0"
+git push origin v1.0.0
+```
+
 ## 開発コマンド
 
 ### ローカル開発
