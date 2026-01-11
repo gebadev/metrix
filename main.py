@@ -8,11 +8,16 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from routers import convert
+
 app = FastAPI(
     title="metrix",
     description="Simple unit conversion web application",
     version="0.1.0"
 )
+
+# Include routers
+app.include_router(convert.router)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
