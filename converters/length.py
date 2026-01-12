@@ -16,6 +16,18 @@ UNITS_TO_METERS = {
     'mi': 1609.344
 }
 
+# 単位の日本語名称
+UNIT_NAMES = {
+    'm': 'メートル',
+    'km': 'キロメートル',
+    'cm': 'センチメートル',
+    'mm': 'ミリメートル',
+    'in': 'インチ',
+    'ft': 'フィート',
+    'yd': 'ヤード',
+    'mi': 'マイル'
+}
+
 
 def get_length_units() -> list[str]:
     """
@@ -25,6 +37,19 @@ def get_length_units() -> list[str]:
         list[str]: 利用可能な単位のリスト
     """
     return list(UNITS_TO_METERS.keys())
+
+
+def get_length_units_info() -> list[dict[str, str]]:
+    """
+    利用可能な長さの単位情報（コードと名称）を返す
+
+    Returns:
+        list[dict[str, str]]: 単位情報のリスト [{"code": "m", "name": "メートル"}, ...]
+    """
+    return [
+        {"code": code, "name": UNIT_NAMES[code]}
+        for code in UNITS_TO_METERS.keys()
+    ]
 
 
 def convert_length(value: float, from_unit: str, to_unit: str) -> float:
