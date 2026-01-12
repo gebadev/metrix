@@ -13,6 +13,15 @@ UNITS_TO_GRAMS = {
     'oz': 28.349523125
 }
 
+# 単位の日本語名称
+UNIT_NAMES = {
+    'g': 'グラム',
+    'kg': 'キログラム',
+    'mg': 'ミリグラム',
+    'lb': 'ポンド',
+    'oz': 'オンス'
+}
+
 
 def get_weight_units() -> list[str]:
     """
@@ -22,6 +31,19 @@ def get_weight_units() -> list[str]:
         list[str]: 利用可能な単位のリスト
     """
     return list(UNITS_TO_GRAMS.keys())
+
+
+def get_weight_units_info() -> list[dict[str, str]]:
+    """
+    利用可能な重さの単位情報（コードと名称）を返す
+
+    Returns:
+        list[dict[str, str]]: 単位情報のリスト [{"code": "g", "name": "グラム"}, ...]
+    """
+    return [
+        {"code": code, "name": UNIT_NAMES[code]}
+        for code in UNITS_TO_GRAMS.keys()
+    ]
 
 
 def convert_weight(value: float, from_unit: str, to_unit: str) -> float:

@@ -7,9 +7,9 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from converters.length import convert_length
-from converters.weight import convert_weight
-from converters.temperature import convert_temperature
+from converters.length import convert_length, get_length_units_info
+from converters.weight import convert_weight, get_weight_units_info
+from converters.temperature import convert_temperature, get_temperature_units_info
 
 router = APIRouter(prefix="/api", tags=["convert"])
 
@@ -35,6 +35,18 @@ class ErrorResponse(BaseModel):
     """エラーレスポンスのモデル"""
     success: bool = Field(default=False, description="変換が成功したかどうか")
     error: str = Field(..., description="エラーメッセージ")
+
+
+class UnitInfo(BaseModel):
+    """単位情報のモデル"""
+    code: str = Field(..., description="単位コード")
+    name: str = Field(..., description="単位の名称")
+
+
+class UnitsResponse(BaseModel):
+    """単位一覧レスポンスのモデル"""
+    category: str = Field(..., description="カテゴリ名")
+    units: list[UnitInfo] = Field(..., description="利用可能な単位のリスト")
 
 
 @router.post("/convert", response_model=ConvertResponse, responses={400: {"model": ErrorResponse}})
@@ -79,3 +91,35 @@ async def convert_unit(request: ConvertRequest):
             status_code=400,
             detail=str(e)
         )
+
+
+@router.get("/units/{category}", response_model=UnitsResponse, responses={404: {"model": ErrorResponse}})
+async def get_units(category: str):
+    """
+    カテゴリ別の利用可能な単位一覧を取得するAPIエンドポイント
+
+    Args:
+        category: 単位カテゴリ (length, weight, temperature)
+
+    Returns:
+        UnitsResponse: 単位一覧
+
+    Raises:
+        HTTPException: 無効なカテゴリが指定された場合 (404)
+    """
+    if category == "length":
+        units_info = get_length_units_info()
+    elif category == "weight":
+        units_info = get_weight_units_info()
+    elif category == "temperature":
+        units_info = get_temperature_units_info()
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Category not found: {category}"
+        )
+
+    return UnitsResponse(
+        category=category,
+        units=[UnitInfo(**unit) for unit in units_info]
+    )

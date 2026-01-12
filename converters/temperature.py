@@ -7,6 +7,13 @@
 # 対応する温度単位
 TEMPERATURE_UNITS = ['celsius', 'fahrenheit', 'kelvin']
 
+# 単位の日本語名称
+UNIT_NAMES = {
+    'celsius': '摂氏（℃）',
+    'fahrenheit': '華氏（℉）',
+    'kelvin': 'ケルビン（K）'
+}
+
 
 def get_temperature_units() -> list[str]:
     """
@@ -16,6 +23,19 @@ def get_temperature_units() -> list[str]:
         list[str]: 利用可能な単位のリスト
     """
     return TEMPERATURE_UNITS.copy()
+
+
+def get_temperature_units_info() -> list[dict[str, str]]:
+    """
+    利用可能な温度の単位情報（コードと名称）を返す
+
+    Returns:
+        list[dict[str, str]]: 単位情報のリスト [{"code": "celsius", "name": "摂氏（℃）"}, ...]
+    """
+    return [
+        {"code": code, "name": UNIT_NAMES[code]}
+        for code in TEMPERATURE_UNITS
+    ]
 
 
 def convert_temperature(value: float, from_unit: str, to_unit: str) -> float:

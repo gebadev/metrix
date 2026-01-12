@@ -238,3 +238,80 @@ class TestConvertAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["result"] == 3500.0
+
+
+class TestUnitsAPI:
+    """GET /api/units/{category} エンドポイントのテスト"""
+
+    def test_get_length_units(self):
+        """長さカテゴリの単位一覧が取得できること"""
+        response = client.get("/api/units/length")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["category"] == "length"
+        assert "units" in data
+        assert len(data["units"]) > 0
+
+        # 単位情報の構造を確認
+        for unit in data["units"]:
+            assert "code" in unit
+            assert "name" in unit
+
+        # 特定の単位が含まれているか確認
+        unit_codes = [unit["code"] for unit in data["units"]]
+        assert "m" in unit_codes
+        assert "km" in unit_codes
+        assert "cm" in unit_codes
+
+    def test_get_weight_units(self):
+        """重さカテゴリの単位一覧が取得できること"""
+        response = client.get("/api/units/weight")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["category"] == "weight"
+        assert "units" in data
+        assert len(data["units"]) > 0
+
+        # 特定の単位が含まれているか確認
+        unit_codes = [unit["code"] for unit in data["units"]]
+        assert "g" in unit_codes
+        assert "kg" in unit_codes
+        assert "lb" in unit_codes
+
+    def test_get_temperature_units(self):
+        """温度カテゴリの単位一覧が取得できること"""
+        response = client.get("/api/units/temperature")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["category"] == "temperature"
+        assert "units" in data
+        assert len(data["units"]) > 0
+
+        # 特定の単位が含まれているか確認
+        unit_codes = [unit["code"] for unit in data["units"]]
+        assert "celsius" in unit_codes
+        assert "fahrenheit" in unit_codes
+        assert "kelvin" in unit_codes
+
+    def test_get_units_invalid_category(self):
+        """無効なカテゴリで404エラーが返ること"""
+        response = client.get("/api/units/invalid_category")
+        assert response.status_code == 404
+        data = response.json()
+        assert "Category not found" in data["detail"]
+
+    def test_get_units_with_japanese_names(self):
+        """単位情報に日本語名称が含まれていること"""
+        response = client.get("/api/units/length")
+        assert response.status_code == 200
+        data = response.json()
+
+        # メートルの単位を探す
+        meter_unit = next((u for u in data["units"] if u["code"] == "m"), None)
+        assert meter_unit is not None
+        assert meter_unit["name"] == "メートル"
+
+        # キロメートルの単位を探す
+        km_unit = next((u for u in data["units"] if u["code"] == "km"), None)
+        assert km_unit is not None
+        assert km_unit["name"] == "キロメートル"
