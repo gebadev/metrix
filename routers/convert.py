@@ -4,12 +4,19 @@
 単位変換のためのAPIエンドポイントを提供
 """
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+import math
+from fastapi import APIRouter
+from pydantic import BaseModel, Field, field_validator
 
 from converters.length import convert_length, get_length_units_info
 from converters.weight import convert_weight, get_weight_units_info
 from converters.temperature import convert_temperature, get_temperature_units_info
+from exceptions import (
+    ValidationError,
+    InvalidCategoryError,
+    InvalidUnitError,
+    CategoryNotFoundError
+)
 
 router = APIRouter(prefix="/api", tags=["convert"])
 
@@ -20,6 +27,31 @@ class ConvertRequest(BaseModel):
     from_unit: str = Field(..., description="変換元の単位")
     to_unit: str = Field(..., description="変換先の単位")
     category: str = Field(..., description="変換カテゴリ (length, weight, temperature)")
+
+    @field_validator('value')
+    @classmethod
+    def validate_value(cls, v: float) -> float:
+        """値のバリデーション"""
+        if math.isnan(v) or math.isinf(v):
+            raise ValueError("Value must be a finite number")
+        return v
+
+    @field_validator('category')
+    @classmethod
+    def validate_category(cls, v: str) -> str:
+        """カテゴリのバリデーション"""
+        valid_categories = {'length', 'weight', 'temperature'}
+        if v not in valid_categories:
+            raise ValueError(f"Category must be one of: {', '.join(valid_categories)}")
+        return v
+
+    @field_validator('from_unit', 'to_unit')
+    @classmethod
+    def validate_unit(cls, v: str) -> str:
+        """単位のバリデーション（空文字チェック）"""
+        if not v or not v.strip():
+            raise ValueError("Unit cannot be empty")
+        return v.strip()
 
 
 class ConvertResponse(BaseModel):
@@ -72,10 +104,7 @@ async def convert_unit(request: ConvertRequest):
         elif request.category == "temperature":
             result = convert_temperature(request.value, request.from_unit, request.to_unit)
         else:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid category: {request.category}"
-            )
+            raise InvalidCategoryError(request.category)
 
         return ConvertResponse(
             success=True,
@@ -86,11 +115,14 @@ async def convert_unit(request: ConvertRequest):
         )
 
     except ValueError as e:
-        # 変換関数からのValueErrorをHTTP 400エラーに変換
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
+        # 変換関数からのValueErrorをカスタム例外に変換
+        error_msg = str(e)
+        if "Invalid unit:" in error_msg:
+            # 単位名を抽出
+            unit = error_msg.split("Invalid unit:")[-1].strip()
+            raise InvalidUnitError(unit)
+        else:
+            raise ValidationError(error_msg)
 
 
 @router.get("/units/{category}", response_model=UnitsResponse, responses={404: {"model": ErrorResponse}})
@@ -105,7 +137,7 @@ async def get_units(category: str):
         UnitsResponse: 単位一覧
 
     Raises:
-        HTTPException: 無効なカテゴリが指定された場合 (404)
+        CategoryNotFoundError: 無効なカテゴリが指定された場合 (404)
     """
     if category == "length":
         units_info = get_length_units_info()
@@ -114,10 +146,7 @@ async def get_units(category: str):
     elif category == "temperature":
         units_info = get_temperature_units_info()
     else:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Category not found: {category}"
-        )
+        raise CategoryNotFoundError(category)
 
     return UnitsResponse(
         category=category,

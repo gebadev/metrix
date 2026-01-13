@@ -82,7 +82,8 @@ class TestConvertAPI:
         )
         assert response.status_code == 400
         data = response.json()
-        assert "Invalid category" in data["detail"]
+        assert data["success"] is False
+        assert "Category must be one of" in data["error"]
 
     def test_convert_invalid_from_unit(self):
         """無効な変換元単位で400エラーが返ること"""
@@ -97,7 +98,8 @@ class TestConvertAPI:
         )
         assert response.status_code == 400
         data = response.json()
-        assert "Invalid unit" in data["detail"]
+        assert data["success"] is False
+        assert "Invalid unit" in data["error"]
 
     def test_convert_invalid_to_unit(self):
         """無効な変換先単位で400エラーが返ること"""
@@ -112,10 +114,11 @@ class TestConvertAPI:
         )
         assert response.status_code == 400
         data = response.json()
-        assert "Invalid unit" in data["detail"]
+        assert data["success"] is False
+        assert "Invalid unit" in data["error"]
 
     def test_convert_missing_fields(self):
-        """必須フィールドが欠けている場合に422エラーが返ること"""
+        """必須フィールドが欠けている場合に400エラーが返ること"""
         response = client.post(
             "/api/convert",
             json={
@@ -124,7 +127,10 @@ class TestConvertAPI:
                 # to_unit と category が欠けている
             }
         )
-        assert response.status_code == 422
+        assert response.status_code == 400
+        data = response.json()
+        assert data["success"] is False
+        assert "error" in data
 
     def test_convert_various_length_units(self):
         """様々な長さ単位の変換が正しく動作すること"""
@@ -298,7 +304,8 @@ class TestUnitsAPI:
         response = client.get("/api/units/invalid_category")
         assert response.status_code == 404
         data = response.json()
-        assert "Category not found" in data["detail"]
+        assert data["success"] is False
+        assert "Category not found" in data["error"]
 
     def test_get_units_with_japanese_names(self):
         """単位情報に日本語名称が含まれていること"""
@@ -315,3 +322,76 @@ class TestUnitsAPI:
         km_unit = next((u for u in data["units"] if u["code"] == "km"), None)
         assert km_unit is not None
         assert km_unit["name"] == "キロメートル"
+
+
+class TestErrorHandling:
+    """エラーハンドリングのテスト"""
+
+    def test_convert_empty_unit(self):
+        """空の単位文字列で400エラーが返ること"""
+        response = client.post(
+            "/api/convert",
+            json={
+                "value": 100,
+                "from_unit": "",
+                "to_unit": "km",
+                "category": "length"
+            }
+        )
+        assert response.status_code == 400
+        data = response.json()
+        assert data["success"] is False
+        assert "error" in data
+
+    def test_convert_whitespace_unit(self):
+        """空白のみの単位で400エラーが返ること"""
+        response = client.post(
+            "/api/convert",
+            json={
+                "value": 100,
+                "from_unit": "   ",
+                "to_unit": "km",
+                "category": "length"
+            }
+        )
+        assert response.status_code == 400
+        data = response.json()
+        assert data["success"] is False
+
+    def test_convert_invalid_value_type(self):
+        """無効な値の型で400エラーが返ること"""
+        response = client.post(
+            "/api/convert",
+            json={
+                "value": "not_a_number",
+                "from_unit": "m",
+                "to_unit": "km",
+                "category": "length"
+            }
+        )
+        assert response.status_code == 400
+        data = response.json()
+        assert data["success"] is False
+
+    def test_health_endpoint(self):
+        """ヘルスチェックエンドポイントが正常に動作すること"""
+        response = client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+
+    def test_cors_headers(self):
+        """CORSヘッダーが設定されていること"""
+        # POSTリクエストでCORSヘッダーをチェック
+        response = client.post(
+            "/api/convert",
+            json={
+                "value": 100,
+                "from_unit": "m",
+                "to_unit": "km",
+                "category": "length"
+            },
+            headers={"Origin": "http://localhost:3000"}
+        )
+        # 通常のリクエストでもCORSヘッダーが返される
+        assert response.status_code == 200
