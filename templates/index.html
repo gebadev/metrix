@@ -16,7 +16,56 @@
         <main>
             <div class="converter-section">
                 <h2>Unit Converter</h2>
-                <p>Coming soon: Length, Weight, and Temperature conversions</p>
+
+                <!-- Category selection -->
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" class="form-control">
+                        <option value="length">Length</option>
+                        <option value="weight">Weight</option>
+                        <option value="temperature">Temperature</option>
+                    </select>
+                </div>
+
+                <!-- Input value -->
+                <div class="form-group">
+                    <label for="value">Value</label>
+                    <input type="number" id="value" class="form-control" placeholder="Enter value" step="any">
+                </div>
+
+                <!-- From unit -->
+                <div class="form-group">
+                    <label for="from-unit">From Unit</label>
+                    <select id="from-unit" class="form-control">
+                        <!-- Populated dynamically based on category -->
+                    </select>
+                </div>
+
+                <!-- To unit -->
+                <div class="form-group">
+                    <label for="to-unit">To Unit</label>
+                    <select id="to-unit" class="form-control">
+                        <!-- Populated dynamically based on category -->
+                    </select>
+                </div>
+
+                <!-- Convert button -->
+                <div class="form-group">
+                    <button id="convert-btn" class="btn btn-primary">Convert</button>
+                </div>
+
+                <!-- Result display -->
+                <div id="result-section" class="result-section" style="display: none;">
+                    <h3>Result</h3>
+                    <div id="result-content" class="result-content">
+                        <!-- Result will be displayed here -->
+                    </div>
+                </div>
+
+                <!-- Error display -->
+                <div id="error-section" class="error-section" style="display: none;">
+                    <p id="error-message" class="error-message"></p>
+                </div>
             </div>
         </main>
 
