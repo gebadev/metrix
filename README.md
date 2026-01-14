@@ -179,6 +179,24 @@ gcloud run services delete metrix --region asia-northeast1
 gcloud run services logs read metrix --region asia-northeast1 --limit 50
 ```
 
+## セキュリティに関する注意
+
+このプロジェクトは学習目的で作成されています。本番環境で使用する場合は以下の点に注意してください:
+
+- **環境変数の管理**: プロジェクトIDやAPIキーは環境変数で管理することを推奨します
+- **サービスアカウントキー**: GCPのサービスアカウントキー（`.json`ファイル）は絶対にGitにコミットしないでください
+- **機密情報の保護**: パスワード、APIキー、トークンなどは `.env` ファイルで管理してください（`.gitignore` で除外済み）
+- **認証設定**: 本番環境では `--allow-unauthenticated` の使用を慎重に検討してください
+
+### .gitignoreで保護されているファイル
+
+以下のファイルは既に `.gitignore` で除外されています:
+
+- `.env` - 環境変数ファイル
+- `.venv/` - Python仮想環境
+- `*.pyc`, `__pycache__/` - Pythonキャッシュファイル
+- その他の一時ファイルやビルド成果物
+
 ## ライセンス
 
 このプロジェクトは学習目的で作成されています。
