@@ -15,14 +15,28 @@
 
 ## セットアップ手順
 
-### 1. リポジトリのクローン
+### Dockerを使用する場合（推奨）
+
+```bash
+# イメージのビルド
+docker build -t metrix .
+
+# コンテナの起動
+docker run -p 8080:8080 metrix
+```
+
+ブラウザで http://localhost:8080 にアクセスしてアプリケーションを確認できます。
+
+### ローカル環境で実行する場合
+
+#### 1. リポジトリのクローン
 
 ```bash
 git clone https://github.com/gebadev/metrix.git
 cd metrix
 ```
 
-### 2. 仮想環境の作成と有効化
+#### 2. 仮想環境の作成と有効化
 
 ```bash
 # 仮想環境の作成
@@ -36,13 +50,13 @@ source .venv/bin/activate
 .venv\Scripts\activate
 ```
 
-### 3. 依存パッケージのインストール
+#### 3. 依存パッケージのインストール
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. 開発サーバーの起動
+#### 4. 開発サーバーの起動
 
 ```bash
 uvicorn main:app --reload --port 8080
