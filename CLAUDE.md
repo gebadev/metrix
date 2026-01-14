@@ -90,6 +90,30 @@ pytest
 pytest --cov=converters --cov=routers
 ```
 
+### Google Cloud Runへのデプロイ
+
+```bash
+# プロジェクトの設定
+gcloud config set project metrix-484311
+
+# 必要なAPIの有効化（初回のみ）
+gcloud services enable run.googleapis.com
+gcloud services enable cloudbuild.googleapis.com
+
+# Cloud Runへのデプロイ
+gcloud run deploy metrix \
+  --source . \
+  --platform managed \
+  --region asia-northeast1 \
+  --allow-unauthenticated
+
+# デプロイされたサービスの確認
+gcloud run services describe metrix --region asia-northeast1
+
+# ログの確認
+gcloud run services logs read metrix --region asia-northeast1
+```
+
 ## アーキテクチャ
 
 ### ディレクトリ構成
