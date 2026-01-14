@@ -113,8 +113,8 @@ pytest
 # gcloudにログイン
 gcloud auth login
 
-# プロジェクトを設定
-gcloud config set project metrix-484311
+# プロジェクトを設定（YOUR-PROJECT-IDを実際のGCPプロジェクトIDに置き換えてください）
+gcloud config set project YOUR-PROJECT-ID
 
 # Cloud Run APIを有効化（初回のみ）
 gcloud services enable run.googleapis.com

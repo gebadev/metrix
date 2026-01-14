@@ -93,8 +93,8 @@ pytest --cov=converters --cov=routers
 ### Google Cloud Runへのデプロイ
 
 ```bash
-# プロジェクトの設定
-gcloud config set project metrix-484311
+# プロジェクトの設定（YOUR-PROJECT-IDを実際のGCPプロジェクトIDに置き換える）
+gcloud config set project YOUR-PROJECT-ID
 
 # 必要なAPIの有効化（初回のみ）
 gcloud services enable run.googleapis.com
