@@ -97,6 +97,88 @@ pytest
 - **重さ**: g, kg, mg, lb, oz
 - **温度**: °C, °F, K
 
+## Google Cloud Runへのデプロイ
+
+### 前提条件
+
+- Google Cloud Platform（GCP）アカウント
+- gcloudコマンドラインツールのインストールと認証
+- プロジェクトIDの準備
+
+### デプロイ手順
+
+#### 1. gcloudの認証とプロジェクト設定
+
+```bash
+# gcloudにログイン
+gcloud auth login
+
+# プロジェクトを設定
+gcloud config set project metrix-484311
+
+# Cloud Run APIを有効化（初回のみ）
+gcloud services enable run.googleapis.com
+gcloud services enable cloudbuild.googleapis.com
+```
+
+#### 2. Cloud Runへのデプロイ
+
+```bash
+# ソースコードから直接デプロイ
+gcloud run deploy metrix \
+  --source . \
+  --platform managed \
+  --region asia-northeast1 \
+  --allow-unauthenticated
+```
+
+デプロイオプションの説明:
+- `--source .`: カレントディレクトリのソースコードを使用（Dockerfileが自動検出される）
+- `--platform managed`: フルマネージドのCloud Runを使用
+- `--region asia-northeast1`: 東京リージョンにデプロイ
+- `--allow-unauthenticated`: 認証なしでアクセス可能にする（公開アプリケーション）
+
+#### 3. デプロイ後の確認
+
+デプロイが完了すると、サービスURLが表示されます:
+
+```
+Service [metrix] revision [metrix-00001-xxx] has been deployed and is serving 100 percent of traffic.
+Service URL: https://metrix-xxxxxxxxxx-an.a.run.app
+```
+
+ブラウザでこのURLにアクセスして、アプリケーションが正常に動作することを確認します。
+
+#### 4. サービスの管理
+
+```bash
+# サービスの一覧表示
+gcloud run services list
+
+# サービスの詳細情報を表示
+gcloud run services describe metrix --region asia-northeast1
+
+# ログの確認
+gcloud run services logs read metrix --region asia-northeast1
+
+# サービスの削除（必要な場合）
+gcloud run services delete metrix --region asia-northeast1
+```
+
+### トラブルシューティング
+
+デプロイ時にエラーが発生した場合:
+
+1. **ビルドエラー**: Dockerfileの構文やPythonの依存関係を確認
+2. **権限エラー**: GCPプロジェクトの権限設定を確認
+3. **リージョンエラー**: 指定したリージョンがCloud Runで利用可能か確認
+
+詳細なログは以下のコマンドで確認できます:
+
+```bash
+gcloud run services logs read metrix --region asia-northeast1 --limit 50
+```
+
 ## ライセンス
 
 このプロジェクトは学習目的で作成されています。
