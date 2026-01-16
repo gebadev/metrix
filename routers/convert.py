@@ -8,9 +8,9 @@ import math
 from fastapi import APIRouter
 from pydantic import BaseModel, Field, field_validator
 
-from converters.length import convert_length, get_length_units_info
-from converters.weight import convert_weight, get_weight_units_info
-from converters.temperature import convert_temperature, get_temperature_units_info
+from converters.length import convert_length, get_length_units_info, get_length_units
+from converters.weight import convert_weight, get_weight_units_info, get_weight_units
+from converters.temperature import convert_temperature, get_temperature_units_info, get_temperature_units
 from exceptions import (
     ValidationError,
     InvalidCategoryError,
@@ -19,6 +19,26 @@ from exceptions import (
 )
 
 router = APIRouter(prefix="/api", tags=["convert"])
+
+
+# カテゴリ別の設定マッピング
+CATEGORY_CONFIG = {
+    "length": {
+        "convert_func": convert_length,
+        "get_units_func": get_length_units,
+        "get_units_info_func": get_length_units_info
+    },
+    "weight": {
+        "convert_func": convert_weight,
+        "get_units_func": get_weight_units,
+        "get_units_info_func": get_weight_units_info
+    },
+    "temperature": {
+        "convert_func": convert_temperature,
+        "get_units_func": get_temperature_units,
+        "get_units_info_func": get_temperature_units_info
+    }
+}
 
 
 class ConvertRequest(BaseModel):
@@ -158,15 +178,15 @@ async def convert_unit(request: ConvertRequest):
         HTTPException: 無効なカテゴリまたは単位が指定された場合
     """
     try:
-        # カテゴリに応じて適切な変換関数を呼び出す
-        if request.category == "length":
-            result = convert_length(request.value, request.from_unit, request.to_unit)
-        elif request.category == "weight":
-            result = convert_weight(request.value, request.from_unit, request.to_unit)
-        elif request.category == "temperature":
-            result = convert_temperature(request.value, request.from_unit, request.to_unit)
-        else:
+        # カテゴリ設定を取得
+        if request.category not in CATEGORY_CONFIG:
             raise InvalidCategoryError(request.category)
+
+        config = CATEGORY_CONFIG[request.category]
+        convert_func = config["convert_func"]
+
+        # 変換を実行
+        result = convert_func(request.value, request.from_unit, request.to_unit)
 
         return ConvertResponse(
             success=True,
@@ -227,21 +247,14 @@ async def batch_convert_unit(request: BatchConvertRequest):
         HTTPException: 無効なカテゴリまたは単位が指定された場合
     """
     try:
-        # カテゴリに応じて適切な変換関数と単位一覧を取得
-        if request.category == "length":
-            convert_func = convert_length
-            from converters.length import get_length_units
-            all_units = get_length_units()
-        elif request.category == "weight":
-            convert_func = convert_weight
-            from converters.weight import get_weight_units
-            all_units = get_weight_units()
-        elif request.category == "temperature":
-            convert_func = convert_temperature
-            from converters.temperature import get_temperature_units
-            all_units = get_temperature_units()
-        else:
+        # カテゴリ設定を取得
+        if request.category not in CATEGORY_CONFIG:
             raise InvalidCategoryError(request.category)
+
+        config = CATEGORY_CONFIG[request.category]
+        convert_func = config["convert_func"]
+        get_units_func = config["get_units_func"]
+        all_units = get_units_func()
 
         # from_unitの検証
         if request.from_unit not in all_units:
@@ -262,8 +275,10 @@ async def batch_convert_unit(request: BatchConvertRequest):
             try:
                 converted_value = convert_func(request.value, request.from_unit, to_unit)
                 results.append(ConversionResult(to_unit=to_unit, value=converted_value))
-            except ValueError:
-                # 変換に失敗した単位を記録
+            except ValueError as e:
+                # 変換に失敗した単位を記録（ログも出力）
+                import logging
+                logging.warning(f"Failed to convert {request.value} {request.from_unit} to {to_unit}: {str(e)}")
                 failed_units.append(to_unit)
 
         # 結果を単位の大きさ順にソート（降順）
@@ -302,14 +317,12 @@ async def get_units(category: str):
     Raises:
         CategoryNotFoundError: 無効なカテゴリが指定された場合 (404)
     """
-    if category == "length":
-        units_info = get_length_units_info()
-    elif category == "weight":
-        units_info = get_weight_units_info()
-    elif category == "temperature":
-        units_info = get_temperature_units_info()
-    else:
+    if category not in CATEGORY_CONFIG:
         raise CategoryNotFoundError(category)
+
+    config = CATEGORY_CONFIG[category]
+    get_units_info_func = config["get_units_info_func"]
+    units_info = get_units_info_func()
 
     return UnitsResponse(
         category=category,

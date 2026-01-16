@@ -192,48 +192,10 @@ async function handleBatchConvert() {
 }
 
 /**
- * 入力値のクライアント側バリデーション
+ * 共通の入力値バリデーション
  * @returns {boolean} - バリデーション結果
  */
-function validateInput() {
-    const value = valueInput.value.trim();
-
-    // 空チェック
-    if (value === '') {
-        showError('値を入力してください');
-        valueInput.focus();
-        return false;
-    }
-
-    // 数値チェック
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) {
-        showError('有効な数値を入力してください');
-        valueInput.focus();
-        return false;
-    }
-
-    // 無限大チェック
-    if (!isFinite(numValue)) {
-        showError('有限の数値を入力してください');
-        valueInput.focus();
-        return false;
-    }
-
-    // 単位選択チェック
-    if (!fromUnitSelect.value || !toUnitSelect.value) {
-        showError('変換元と変換先の単位を選択してください');
-        return false;
-    }
-
-    return true;
-}
-
-/**
- * 一括変換用の入力値バリデーション
- * @returns {boolean} - バリデーション結果
- */
-function validateBatchInput() {
+function validateCommonInput() {
     const value = valueInput.value.trim();
 
     // 空チェック
@@ -265,6 +227,34 @@ function validateBatchInput() {
     }
 
     return true;
+}
+
+/**
+ * 入力値のクライアント側バリデーション
+ * @returns {boolean} - バリデーション結果
+ */
+function validateInput() {
+    // 共通バリデーション
+    if (!validateCommonInput()) {
+        return false;
+    }
+
+    // to_unit選択チェック（単一変換のみ）
+    if (!toUnitSelect.value) {
+        showError('変換先の単位を選択してください');
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * 一括変換用の入力値バリデーション
+ * @returns {boolean} - バリデーション結果
+ */
+function validateBatchInput() {
+    // 共通バリデーションのみ（to_unitは不要）
+    return validateCommonInput();
 }
 
 /**
