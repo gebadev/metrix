@@ -49,9 +49,10 @@
                     </select>
                 </div>
 
-                <!-- Convert button -->
-                <div class="form-group">
+                <!-- Convert buttons -->
+                <div class="form-group button-group">
                     <button id="convert-btn" class="btn btn-primary">Convert</button>
+                    <button id="batch-convert-btn" class="btn btn-secondary">Batch Convert</button>
                 </div>
 
                 <!-- Result display -->
@@ -59,6 +60,14 @@
                     <h3>Result</h3>
                     <div id="result-content" class="result-content">
                         <!-- Result will be displayed here -->
+                    </div>
+                </div>
+
+                <!-- Batch conversion result display -->
+                <div id="batch-result-section" class="result-section" style="display: none;">
+                    <h3>Batch Conversion Results</h3>
+                    <div id="batch-result-content" class="batch-result-content">
+                        <!-- Batch results will be displayed here -->
                     </div>
                 </div>
 

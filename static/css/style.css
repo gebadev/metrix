@@ -87,10 +87,18 @@ main {
     transition: background-color 0.3s;
 }
 
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+.button-group .btn {
+    flex: 1;
+}
+
 .btn-primary {
     background-color: #3498db;
     color: #fff;
-    width: 100%;
 }
 
 .btn-primary:hover {
@@ -99,6 +107,24 @@ main {
 
 .btn-primary:active {
     background-color: #21618c;
+}
+
+.btn-secondary {
+    background-color: #95a5a6;
+    color: #fff;
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+}
+
+.btn-secondary:active {
+    background-color: #5d6d7e;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .result-section {
@@ -130,6 +156,55 @@ main {
 .error-message {
     color: #c62828;
     margin: 0;
+}
+
+/* Batch result styles */
+.batch-result-content {
+    font-size: 1rem;
+    color: #2c3e50;
+}
+
+.batch-result-header {
+    margin-bottom: 15px;
+}
+
+.batch-result-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.batch-result-table thead {
+    background-color: #ecf0f1;
+}
+
+.batch-result-table th,
+.batch-result-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.batch-result-table th {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.batch-result-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.batch-result-warning {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+    border-radius: 4px;
+}
+
+.batch-result-warning p {
+    margin: 0;
+    color: #856404;
 }
 
 footer {
