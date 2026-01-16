@@ -324,6 +324,220 @@ class TestUnitsAPI:
         assert km_unit["name"] == "キロメートル"
 
 
+class TestBatchConvertAPI:
+    """POST /api/convert/batch エンドポイントのテスト"""
+
+    def test_batch_convert_length_all_units(self):
+        """長さの一括変換が正常に実行されること（to_units省略）"""
+        response = client.post(
+            "/api/convert/batch",
+            json={
+                "value": 100,
+                "from_unit": "m",
+                "category": "length"
+            }
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["original_value"] == 100
+        assert data["from_unit"] == "m"
+        assert data["category"] == "length"
+        assert len(data["results"]) > 0
+        assert len(data["failed_units"]) == 0
+
+        # from_unitが結果に含まれていないことを確認
+        result_units = [r["to_unit"] for r in data["results"]]
+        assert "m" not in result_units
+
+        # 主要な単位が含まれていることを確認
+        assert "km" in result_units
+        assert "cm" in result_units
+        assert "mm" in result_units
+
+    def test_batch_convert_with_specific_units(self):
+        """特定の単位リストへの一括変換が正常に実行されること"""
+        response = client.post(
+            "/api/convert/batch",
+            json={
+                "value": 1000,
+                "from_unit": "g",
+                "category": "weight",
+                "to_units": ["kg", "mg", "lb"]
+            }
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert len(data["results"]) == 3
+
+        # 結果の単位を確認
+        result_units = [r["to_unit"] for r in data["results"]]
+        assert "kg" in result_units
+        assert "mg" in result_units
+        assert "lb" in result_units
+
+        # kg変換結果を確認
+        kg_result = next(r for r in data["results"] if r["to_unit"] == "kg")
+        assert kg_result["value"] == 1.0
+
+    def test_batch_convert_temperature(self):
+        """温度の一括変換が正常に実行されること"""
+        response = client.post(
+            "/api/convert/batch",
+            json={
+                "value": 0,
+                "from_unit": "celsius",
+                "category": "temperature"
+            }
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert len(data["results"]) == 2  # fahrenheit と kelvin
+
+        result_units = [r["to_unit"] for r in data["results"]]
+        assert "fahrenheit" in result_units
+        assert "kelvin" in result_units
+        assert "celsius" not in result_units
+
+    def test_batch_convert_sorted_by_size(self):
+        """結果が単位の大きさ順（降順）にソートされていること"""
+        response = client.post(
+            "/api/convert/batch",
+            json={
+                "value": 100,
+                "from_unit": "m",
+                "category": "length",
+                "to_units": ["mm", "km", "cm"]
+            }
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # 単位の順序を確認（km > cm > mm）
+        result_units = [r["to_unit"] for r in data["results"]]
+        assert result_units == ["km", "cm", "mm"]
+
+    def test_batch_convert_with_invalid_unit(self):
+        """無効な単位が混在している場合、成功した単位のみ返されること"""
+        response = client.post(
+            "/api/convert/batch",
+            json={
+                "value": 100,
+                "from_unit": "m",
+                "category": "length",
+                "to_units": ["km", "invalid_unit", "cm"]
+            }
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert len(data["results"]) == 2  # km と cm のみ
+        assert len(data["failed_units"]) == 1
+        assert "invalid_unit" in data["failed_units"]
+
+        # 成功した単位を確認
+        result_units = [r["to_unit"] for r in data["results"]]
+        assert "km" in result_units
+        assert "cm" in result_units
+
+    def test_batch_convert_invalid_category(self):
+        """無効なカテゴリで400エラーが返ること"""
+        response = client.post(
+            "/api/convert/batch",
+            json={
+                "value": 100,
+                "from_unit": "m",
+                "category": "invalid_category"
+            }
+        )
+        assert response.status_code == 400
+        data = response.json()
+        assert data["success"] is False
+        assert "Category must be one of" in data["error"]
+
+    def test_batch_convert_invalid_from_unit(self):
+        """無効なfrom_unitで400エラーが返ること"""
+        response = client.post(
+            "/api/convert/batch",
+            json={
+                "value": 100,
+                "from_unit": "invalid_unit",
+                "category": "length"
+            }
+        )
+        assert response.status_code == 400
+        data = response.json()
+        assert data["success"] is False
+        assert "Invalid unit" in data["error"]
+
+    def test_batch_convert_empty_to_units(self):
+        """空のto_unitsリストで400エラーが返ること"""
+        response = client.post(
+            "/api/convert/batch",
+            json={
+                "value": 100,
+                "from_unit": "m",
+                "category": "length",
+                "to_units": []
+            }
+        )
+        assert response.status_code == 400
+        data = response.json()
+        assert data["success"] is False
+        assert "to_units cannot be an empty list" in data["error"]
+
+    def test_batch_convert_missing_fields(self):
+        """必須フィールドが欠けている場合に400エラーが返ること"""
+        response = client.post(
+            "/api/convert/batch",
+            json={
+                "value": 100,
+                "from_unit": "m"
+                # category が欠けている
+            }
+        )
+        assert response.status_code == 400
+        data = response.json()
+        assert data["success"] is False
+
+    def test_batch_convert_zero_value(self):
+        """値が0でも正しく一括変換できること"""
+        response = client.post(
+            "/api/convert/batch",
+            json={
+                "value": 0,
+                "from_unit": "m",
+                "category": "length",
+                "to_units": ["km", "cm"]
+            }
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert all(r["value"] == 0.0 for r in data["results"])
+
+    def test_batch_convert_negative_value(self):
+        """負の値でも正しく一括変換できること"""
+        response = client.post(
+            "/api/convert/batch",
+            json={
+                "value": -40,
+                "from_unit": "celsius",
+                "category": "temperature"
+            }
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # -40℃ = -40℉ の確認
+        fahrenheit_result = next(r for r in data["results"] if r["to_unit"] == "fahrenheit")
+        assert fahrenheit_result["value"] == -40.0
+
+
 class TestErrorHandling:
     """エラーハンドリングのテスト"""
 

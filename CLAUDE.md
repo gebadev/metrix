@@ -153,9 +153,12 @@ metrix/
 | GET | `/` | メインUIの表示 |
 | GET | `/health` | ヘルスチェック |
 | POST | `/api/convert` | 単位変換の実行 |
+| POST | `/api/convert/batch` | 一括単位変換の実行 |
 | GET | `/api/units/{category}` | カテゴリ別の利用可能な単位一覧の取得 |
 
 ### 変換APIのリクエスト・レスポンス形式
+
+#### 単一変換 (`POST /api/convert`)
 
 **リクエスト**:
 ```json
@@ -185,6 +188,40 @@ metrix/
   "error": "Invalid unit: xyz"
 }
 ```
+
+#### 一括変換 (`POST /api/convert/batch`)
+
+**リクエスト**:
+```json
+{
+  "value": 100,
+  "from_unit": "m",
+  "category": "length",
+  "to_units": ["km", "cm", "mm"]  // 省略可能。省略時はfrom_unitを除く全単位に変換
+}
+```
+
+**成功レスポンス**:
+```json
+{
+  "success": true,
+  "original_value": 100,
+  "from_unit": "m",
+  "category": "length",
+  "results": [
+    {"to_unit": "km", "value": 0.1},
+    {"to_unit": "cm", "value": 10000},
+    {"to_unit": "mm", "value": 100000}
+  ],
+  "failed_units": []  // 変換に失敗した単位のリスト
+}
+```
+
+**特徴**:
+- `to_units`を省略した場合、`from_unit`を除く全単位に変換
+- 結果は単位の大きさ順（降順）にソート
+- 一部の単位が無効でも、成功した変換結果を返す
+- 失敗した単位は`failed_units`フィールドに記録
 
 ## 実装に関する注意事項
 
