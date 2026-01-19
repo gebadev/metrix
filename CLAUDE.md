@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## コミュニケーション言語
+
+- **対話言語**: 日本語
+- **コードコメント**: 日本語
+- **コミットメッセージ**: 日本語
+- **ドキュメント**: 日本語
+- **変数名・関数名**: 英語（プログラミング標準に従う）
+
 ## プロジェクト概要
 
 **metrix**は、様々な単位変換(長さ・重さ・温度、将来的には通貨)を行うシンプルなWebアプリケーションです。Claude Codeを活用したステップバイステップ開発とGoogle Cloud Runへのデプロイを学習目的で行うプロジェクトです。
